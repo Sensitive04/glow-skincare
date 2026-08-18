@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { Lock, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Lock, Loader2, Wifi, WifiOff } from "lucide-react";
 import { signIn, signUp } from "../store";
+import { testConnection } from "../lib/supabase";
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState("");
@@ -8,6 +9,16 @@ export default function Login({ onLogin }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [connStatus, setConnStatus] = useState("checking");
+
+  useEffect(() => {
+    testConnection().then((result) => {
+      setConnStatus(result.ok ? "ok" : "failed");
+      if (!result.ok) {
+        setError(`Connection failed: ${result.status || result.error || "unknown"}`);
+      }
+    });
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,6 +47,13 @@ export default function Login({ onLogin }) {
           <Lock size={32} />
         </div>
         <h1>GLOW Admin</h1>
+
+        <div className={`conn-badge ${connStatus}`}>
+          {connStatus === "checking" && <><Loader2 size={14} className="spin" /> Connecting...</>}
+          {connStatus === "ok" && <><Wifi size={14} /> Connected to Supabase</>}
+          {connStatus === "failed" && <><WifiOff size={14} /> Connection failed</>}
+        </div>
+
         <p>
           {isSignUp
             ? "Create an admin account"
@@ -59,7 +77,7 @@ export default function Login({ onLogin }) {
             required
           />
           {error && <span className="login-error">{error}</span>}
-          <button type="submit" disabled={loading}>
+          <button type="submit" disabled={loading || connStatus !== "ok"}>
             {loading ? (
               <Loader2 size={18} className="spin" />
             ) : isSignUp ? (
