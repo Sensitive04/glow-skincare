@@ -1,26 +1,4 @@
-# dependencies
-/node_modules
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# local env files
-.env*.local
+node_modules
+dist
 .env
-
-# prisma generated client
-/src/generated/
-
-# prisma compute local state
-.prisma/
-
-# database
-/data/
-
-# logs
-*.log
-.prisma/
+.env.local
