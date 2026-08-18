@@ -34,7 +34,11 @@ export default function Cart({
             items.map((item) => (
               <div key={item.id} className="cart-item">
                 <div className="cart-item-image">
-                  <Droplets />
+                  {item.image ? (
+                    <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "var(--radius-sm)" }} />
+                  ) : (
+                    <Droplets />
+                  )}
                 </div>
                 <div className="cart-item-details">
                   <div className="cart-item-name">{item.name}</div>

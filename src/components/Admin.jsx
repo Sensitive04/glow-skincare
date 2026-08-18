@@ -23,6 +23,7 @@ const EMPTY = {
   badge: "",
   rating: "",
   reviews: "",
+  image: "",
 };
 
 export default function Admin({ onLogout }) {
@@ -67,6 +68,7 @@ export default function Admin({ onLogout }) {
       badge: product.badge || "",
       rating: product.rating,
       reviews: product.reviews,
+      image: product.image || "",
     });
     setEditing(product.id);
     setShowAdd(true);
@@ -148,6 +150,14 @@ export default function Admin({ onLogout }) {
                     />
                   </label>
                 </div>
+                <label>
+                  Image URL (paste a link to a product photo)
+                  <input
+                    value={form.image}
+                    onChange={(e) => setForm({ ...form, image: e.target.value })}
+                    placeholder="https://example.com/product-photo.jpg"
+                  />
+                </label>
                 <div className="form-row">
                   <label>
                     Price *

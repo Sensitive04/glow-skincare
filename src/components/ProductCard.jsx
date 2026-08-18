@@ -22,7 +22,11 @@ export default function ProductCard({ product, currency, onAddToCart }) {
   return (
     <div className="product-card">
       <div className="product-image">
-        <Droplets className="product-image-icon" size={64} />
+        {product.image ? (
+          <img src={product.image} alt={product.name} className="product-img" />
+        ) : (
+          <Droplets className="product-image-icon" size={64} />
+        )}
         {product.badge && (
           <span className={`product-badge ${badgeClass}`}>{product.badge}</span>
         )}
