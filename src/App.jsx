@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { SHOP_CONFIG } from "./products";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
@@ -7,11 +7,25 @@ import Cart from "./components/Cart";
 import About from "./components/About";
 import Footer from "./components/Footer";
 import Toast from "./components/Toast";
+import Login from "./components/Login";
+import Admin from "./components/Admin";
+
+function useHashRoute() {
+  const [route, setRoute] = useState(window.location.hash || "#home");
+  useEffect(() => {
+    const handler = () => setRoute(window.location.hash || "#home");
+    window.addEventListener("hashchange", handler);
+    return () => window.removeEventListener("hashchange", handler);
+  }, []);
+  return route;
+}
 
 export default function App() {
+  const route = useHashRoute();
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
+  const [loggedIn, setLoggedIn] = useState(false);
 
   const showToast = useCallback((message) => {
     const id = Date.now();
@@ -60,6 +74,13 @@ export default function App() {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+
+  if (route === "#admin") {
+    if (!loggedIn) {
+      return <Login onLogin={() => setLoggedIn(true)} />;
+    }
+    return <Admin onLogout={() => { setLoggedIn(false); window.location.hash = "#home"; }} />;
+  }
 
   return (
     <>

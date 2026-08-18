@@ -1,14 +1,18 @@
 import { useState } from "react";
-import { PRODUCTS, CATEGORIES, SHOP_CONFIG } from "../products";
+import { CATEGORIES, SHOP_CONFIG } from "../products";
+import { getProducts } from "../store";
 import ProductCard from "./ProductCard";
 
 export default function ProductGrid({ onAddToCart }) {
   const [activeCategory, setActiveCategory] = useState("all");
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const products = getProducts();
 
   const filtered =
     activeCategory === "all"
-      ? PRODUCTS
-      : PRODUCTS.filter((p) => p.category === activeCategory);
+      ? products
+      : products.filter((p) => p.category === activeCategory);
 
   return (
     <section id="products">
