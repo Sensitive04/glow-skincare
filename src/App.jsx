@@ -4,6 +4,7 @@ import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import ProductGrid from "./components/ProductGrid";
 import Cart from "./components/Cart";
+import About from "./components/About";
 import Footer from "./components/Footer";
 import Toast from "./components/Toast";
 
@@ -69,6 +70,7 @@ export default function App() {
       />
       <Hero config={SHOP_CONFIG} />
       <ProductGrid onAddToCart={addToCart} currency={SHOP_CONFIG.currency} />
+      <About />
       <Footer config={SHOP_CONFIG} />
       <Cart
         open={cartOpen}
