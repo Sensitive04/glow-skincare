@@ -2,6 +2,8 @@ import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import { fetchFeatured } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const featured = await fetchFeatured();
 

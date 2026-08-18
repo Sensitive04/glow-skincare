@@ -4,6 +4,8 @@ import { fetchProductBySlug } from "@/lib/db";
 import AddToCartButton from "./AddToCartButton";
 import type { Product } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({
   params,
 }: {

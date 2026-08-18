@@ -2,6 +2,7 @@ import ProductCard from "@/components/ProductCard";
 import { fetchAllProducts } from "@/lib/db";
 
 export const metadata = { title: "All Products | Glō Skincare" };
+export const dynamic = "force-dynamic";
 
 export default async function ProductsPage() {
   const items = await fetchAllProducts();
