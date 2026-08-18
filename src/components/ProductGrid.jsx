@@ -1,13 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CATEGORIES, SHOP_CONFIG } from "../products";
 import { getProducts } from "../store";
 import ProductCard from "./ProductCard";
 
 export default function ProductGrid({ onAddToCart }) {
   const [activeCategory, setActiveCategory] = useState("all");
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const products = getProducts();
+  useEffect(() => {
+    async function load() {
+      const data = await getProducts();
+      setProducts(data);
+      setLoading(false);
+    }
+    load();
+  }, []);
 
   const filtered =
     activeCategory === "all"
@@ -28,16 +36,26 @@ export default function ProductGrid({ onAddToCart }) {
         ))}
       </div>
       <div className="products-section">
-        <div className="products-grid">
-          {filtered.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              currency={SHOP_CONFIG.currency}
-              onAddToCart={onAddToCart}
-            />
-          ))}
-        </div>
+        {loading ? (
+          <p style={{ textAlign: "center", color: "var(--color-text-muted)", padding: "3rem" }}>
+            Loading products...
+          </p>
+        ) : filtered.length === 0 ? (
+          <p style={{ textAlign: "center", color: "var(--color-text-muted)", padding: "3rem" }}>
+            No products found.
+          </p>
+        ) : (
+          <div className="products-grid">
+            {filtered.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                currency={SHOP_CONFIG.currency}
+                onAddToCart={onAddToCart}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

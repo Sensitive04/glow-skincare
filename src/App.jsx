@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { SHOP_CONFIG } from "./products";
+import { getSession } from "./store";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import ProductGrid from "./components/ProductGrid";
@@ -26,6 +27,14 @@ export default function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    getSession().then((session) => {
+      setLoggedIn(!!session);
+      setAuthChecked(true);
+    });
+  }, []);
 
   const showToast = useCallback((message) => {
     const id = Date.now();
@@ -76,6 +85,7 @@ export default function App() {
   );
 
   if (route === "#admin") {
+    if (!authChecked) return null;
     if (!loggedIn) {
       return <Login onLogin={() => setLoggedIn(true)} />;
     }

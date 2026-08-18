@@ -1,53 +1,83 @@
-import { PRODUCTS as DEFAULT_PRODUCTS } from "./products";
+import { supabase } from "./lib/supabase";
 
-const STORAGE_KEY = "glow_products";
-
-function load() {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
-  } catch {}
-  return null;
-}
-
-function save(products) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
-}
-
-function init() {
-  const stored = load();
-  if (!stored || stored.length === 0) {
-    save(DEFAULT_PRODUCTS);
-    return DEFAULT_PRODUCTS;
+export async function getProducts() {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .order("id", { ascending: true });
+  if (error) {
+    console.error("Error fetching products:", error);
+    return [];
   }
-  return stored;
+  return data;
 }
 
-let products = init();
-
-export function getProducts() {
-  return [...products];
+export async function addProduct(product) {
+  const { data, error } = await supabase
+    .from("products")
+    .insert([product])
+    .select()
+    .single();
+  if (error) {
+    console.error("Error adding product:", error);
+    throw error;
+  }
+  return data;
 }
 
-export function addProduct(product) {
-  const id = products.length > 0 ? Math.max(...products.map((p) => p.id)) + 1 : 1;
-  const newProduct = { ...product, id };
-  products = [...products, newProduct];
-  save(products);
-  return newProduct;
+export async function updateProduct(id, updates) {
+  const { error } = await supabase
+    .from("products")
+    .update(updates)
+    .eq("id", id);
+  if (error) {
+    console.error("Error updating product:", error);
+    throw error;
+  }
 }
 
-export function updateProduct(id, updates) {
-  products = products.map((p) => (p.id === id ? { ...p, ...updates } : p));
-  save(products);
+export async function deleteProduct(id) {
+  const { error } = await supabase
+    .from("products")
+    .delete()
+    .eq("id", id);
+  if (error) {
+    console.error("Error deleting product:", error);
+    throw error;
+  }
 }
 
-export function deleteProduct(id) {
-  products = products.filter((p) => p.id !== id);
-  save(products);
+export async function seedProducts(products) {
+  const { error } = await supabase.from("products").insert(products);
+  if (error) {
+    console.error("Error seeding products:", error);
+    throw error;
+  }
 }
 
-export function resetToDefaults() {
-  products = [...DEFAULT_PRODUCTS];
-  save(products);
+export async function signIn(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function signUp(email, password) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function signOut() {
+  await supabase.auth.signOut();
+}
+
+export async function getSession() {
+  const { data } = await supabase.auth.getSession();
+  return data.session;
 }

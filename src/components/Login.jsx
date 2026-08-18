@@ -1,18 +1,32 @@
 import { useState } from "react";
-import { Lock } from "lucide-react";
+import { Lock, Loader2 } from "lucide-react";
+import { signIn, signUp } from "../store";
 
 export default function Login({ onLogin }) {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (password === "glow2024") {
+    setLoading(true);
+    setError("");
+    try {
+      if (isSignUp) {
+        await signUp(email, password);
+        setError("Check your email for a confirmation link, then sign in.");
+        setIsSignUp(false);
+        setLoading(false);
+        return;
+      }
+      await signIn(email, password);
       onLogin();
-    } else {
-      setError(true);
-      setTimeout(() => setError(false), 2000);
+    } catch (err) {
+      setError(err.message || "Authentication failed");
     }
+    setLoading(false);
   };
 
   return (
@@ -22,20 +36,50 @@ export default function Login({ onLogin }) {
           <Lock size={32} />
         </div>
         <h1>GLOW Admin</h1>
-        <p>Enter the admin password to continue</p>
+        <p>
+          {isSignUp
+            ? "Create an admin account"
+            : "Sign in with your Supabase credentials"}
+        </p>
         <form onSubmit={handleSubmit}>
           <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => { setPassword(e.target.value); setError(false); }}
-            className={error ? "error" : ""}
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); setError(""); }}
+            required
             autoFocus
           />
-          {error && <span className="login-error">Wrong password</span>}
-          <button type="submit">Sign In</button>
+          <input
+            type="password"
+            placeholder="Password (min 6 characters)"
+            value={password}
+            onChange={(e) => { setPassword(e.target.value); setError(""); }}
+            minLength={6}
+            required
+          />
+          {error && <span className="login-error">{error}</span>}
+          <button type="submit" disabled={loading}>
+            {loading ? (
+              <Loader2 size={18} className="spin" />
+            ) : isSignUp ? (
+              "Create Account"
+            ) : (
+              "Sign In"
+            )}
+          </button>
         </form>
-        <a href="#home" className="back-link">Back to shop</a>
+        <button
+          className="back-link"
+          onClick={() => { setIsSignUp(!isSignUp); setError(""); }}
+        >
+          {isSignUp
+            ? "Already have an account? Sign in"
+            : "No account? Create one"}
+        </button>
+        <a href="#home" className="back-link" style={{ marginTop: "0.5rem", display: "block" }}>
+          Back to shop
+        </a>
       </div>
     </div>
   );

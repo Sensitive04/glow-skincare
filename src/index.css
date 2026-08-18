@@ -1309,6 +1309,33 @@ img {
   justify-content: center;
 }
 
+.admin-loading {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--color-text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.admin-error {
+  background: #fde8e8;
+  color: var(--color-badge-sale);
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ============ RESPONSIVE ============ */
 @media (max-width: 768px) {
   .navbar-links {
