@@ -118,7 +118,9 @@ if (process.env.VERCEL !== "1" && TELEGRAM_BOT_TOKEN) {
 app.use(cors());
 app.use(express.json());
 
-app.use(express.static(join(__dirname, "dist")));
+if (process.env.VERCEL !== "1") {
+  app.use(express.static(join(__dirname, "dist")));
+}
 
 // --- Auth ---
 app.post("/api/auth/login", (req, res) => {
@@ -223,10 +225,12 @@ app.get("/api/orders/:orderId", async (req, res) => {
   }
 });
 
-// SPA fallback
-app.get("*", (req, res) => {
-  res.sendFile(join(__dirname, "dist", "index.html"));
-});
+// SPA fallback (local dev only)
+if (process.env.VERCEL !== "1") {
+  app.get("*", (req, res) => {
+    res.sendFile(join(__dirname, "dist", "index.html"));
+  });
+}
 
 if (process.env.VERCEL !== "1") {
   app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
