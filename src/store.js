@@ -77,9 +77,19 @@ export async function createOrder(orderData) {
   return res.json();
 }
 
-export async function getOrder(orderId) {
-  const res = await fetch(`${BASE}/orders/${orderId}`);
-  if (!res.ok) throw new Error("Order not found");
+export async function getOrder(orderId, phone) {
+  const params = phone ? `?phone=${encodeURIComponent(phone)}` : "";
+  const res = await fetch(`${BASE}/orders/${orderId}${params}`);
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "Order not found");
+  }
+  return res.json();
+}
+
+export async function getOrdersByPhone(phone) {
+  const res = await fetch(`${BASE}/orders/phone/${encodeURIComponent(phone)}`);
+  if (!res.ok) throw new Error("No orders found");
   return res.json();
 }
 

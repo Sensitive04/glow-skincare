@@ -78,8 +78,25 @@ function formatOrderMessage(order) {
   );
 }
 
-// Long-polling for admin replies
+// Long-polling for admin replies (local dev only)
 let tgOffset = 0;
+
+async function handleTelegramUpdate(text) {
+  const trimmed = (text || "").trim();
+  const trimmedLower = trimmed.toLowerCase();
+  const confirmMatch = trimmedLower.match(/^confirm\s+(GS\d+)$/i);
+  const rejectMatch = trimmedLower.match(/^reject\s+(GS\d+)$/i);
+  const orderId = (confirmMatch || rejectMatch)?.[1]?.toUpperCase();
+
+  if (!orderId) return false;
+
+  const status = confirmMatch ? "confirmed" : "rejected";
+  await updateOrderStatus(orderId, status);
+  const emoji = confirmMatch ? "✅" : "❌";
+  await sendTelegram(`${emoji} Order #${orderId} ${status}${confirmMatch ? " & marked for shipping!" : "."}`);
+  return true;
+}
+
 async function pollTelegramReplies() {
   if (!TELEGRAM_BOT_TOKEN) return;
   try {
@@ -96,19 +113,7 @@ async function pollTelegramReplies() {
       tgOffset = update.update_id + 1;
       const msg = update.message;
       if (!msg || String(msg.chat.id) !== String(TELEGRAM_CHAT_ID)) continue;
-
-      const text = (msg.text || "").trim();
-      const textLower = text.toLowerCase();
-      const confirmMatch = textLower.match(/^confirm\s+(GS\d+)$/i);
-      const rejectMatch = textLower.match(/^reject\s+(GS\d+)$/i);
-      const orderId = (confirmMatch || rejectMatch)?.[1]?.toUpperCase();
-
-      if (orderId) {
-        const status = confirmMatch ? "confirmed" : "rejected";
-        await updateOrderStatus(orderId, status);
-        const emoji = confirmMatch ? "✅" : "❌";
-        await sendTelegram(`${emoji} Order #${orderId} ${status}${confirmMatch ? " & marked for shipping!" : "."}`);
-      }
+      await handleTelegramUpdate(msg.text);
     }
   } catch (e) {
     console.error("Telegram poll error:", e.message);
@@ -236,8 +241,63 @@ app.get("/api/orders/:orderId", async (req, res) => {
     await connectDB();
     const order = await orders.findOne({ orderId: req.params.orderId });
     if (!order) return res.status(404).json({ error: "Order not found" });
+
+    const phone = (req.query.phone || "").trim();
+    if (phone && order.customer?.phone?.replace(/\s/g, "") !== phone.replace(/\s/g, "")) {
+      return res.status(403).json({ error: "Phone number does not match this order" });
+    }
+
     const { _id, ...rest } = order;
     res.json(rest);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get("/api/orders/phone/:phone", async (req, res) => {
+  try {
+    await connectDB();
+    const phone = req.params.phone.trim().replace(/\s/g, "");
+    if (!phone) return res.status(400).json({ error: "Phone number required" });
+    const data = await orders.find({
+      "customer.phone": { $regex: phone.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" },
+    }).sort({ createdAt: -1 }).toArray();
+    res.json(data.map(({ _id, ...rest }) => rest));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// --- Telegram webhook (for Vercel) ---
+app.post("/api/telegram/webhook", async (req, res) => {
+  try {
+    const update = req.body;
+    const msg = update?.message;
+    if (msg && String(msg.chat.id) === String(TELEGRAM_CHAT_ID)) {
+      await handleTelegramUpdate(msg.text);
+    }
+    res.json({ ok: true });
+  } catch (e) {
+    console.error("Telegram webhook error:", e.message);
+    res.json({ ok: true });
+  }
+});
+
+app.post("/api/telegram/set-webhook", async (req, res) => {
+  if (!TELEGRAM_BOT_TOKEN) return res.status(500).json({ error: "TELEGRAM_BOT_TOKEN not configured" });
+  const url = req.body?.url || req.query?.url;
+  if (!url) return res.status(400).json({ error: "Provide webhook URL in body or ?url=" });
+  try {
+    const apiRes = await fetch(
+      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: url + "/api/telegram/webhook" }),
+      }
+    );
+    const data = await apiRes.json();
+    res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

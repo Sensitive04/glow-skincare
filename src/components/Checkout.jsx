@@ -30,6 +30,8 @@ export default function Checkout({ open, onClose, items, total, currency, onOrde
         customer: { name: name.trim(), phone: phone.trim(), address: address.trim() },
       });
       setOrderId(result.orderId);
+      localStorage.setItem("glow_last_order", result.orderId);
+      localStorage.setItem("glow_last_phone", phone.trim());
       onOrderComplete();
     } catch (err) {
       setError(err.message || "Something went wrong");
