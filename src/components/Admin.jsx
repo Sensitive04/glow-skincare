@@ -77,7 +77,7 @@ export default function Admin({ onLogout }) {
       setForm(EMPTY);
       await reload();
     } catch (e) {
-      setError("Failed to save. Check your Supabase table and RLS policies.");
+      setError("Failed to save. Check your MongoDB connection and API server.");
     }
     setSaving(false);
   };
@@ -106,7 +106,7 @@ export default function Admin({ onLogout }) {
       setConfirmDelete(null);
       await reload();
     } catch (e) {
-      setError("Failed to delete. Check your RLS policies.");
+      setError("Failed to delete. Check your MongoDB connection.");
     }
   };
 
@@ -133,7 +133,7 @@ export default function Admin({ onLogout }) {
               <Package size={28} />
               {SHOP_CONFIG.name} Admin
             </h1>
-            <p>Products are stored in Supabase — visible to all visitors</p>
+            <p>Products are stored in MongoDB — visible to all visitors</p>
           </div>
           <div className="admin-actions">
             <button className="admin-btn primary" onClick={() => { cancel(); setShowAdd(true); }}>
@@ -154,7 +154,7 @@ export default function Admin({ onLogout }) {
         {loading ? (
           <div className="admin-loading">
             <Loader2 size={32} className="spin" />
-            <p>Loading products from Supabase...</p>
+            <p>Loading products from MongoDB...</p>
           </div>
         ) : (
           <div className="admin-table-wrap">

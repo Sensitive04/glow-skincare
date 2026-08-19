@@ -5,6 +5,7 @@ import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import ProductGrid from "./components/ProductGrid";
 import Cart from "./components/Cart";
+import Checkout from "./components/Checkout";
 import About from "./components/About";
 import Footer from "./components/Footer";
 import Toast from "./components/Toast";
@@ -25,6 +26,7 @@ export default function App() {
   const route = useHashRoute();
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [loggedIn, setLoggedIn] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
@@ -84,6 +86,12 @@ export default function App() {
     0
   );
 
+  const handleOrderComplete = useCallback(() => {
+    setCart([]);
+    setCartOpen(false);
+    showToast("Order placed successfully!");
+  }, [showToast]);
+
   if (route === "#admin") {
     if (!authChecked) return null;
     if (!loggedIn) {
@@ -111,6 +119,15 @@ export default function App() {
         currency={SHOP_CONFIG.currency}
         onRemove={removeFromCart}
         onUpdateQuantity={updateQuantity}
+        onCheckout={() => { setCartOpen(false); setCheckoutOpen(true); }}
+      />
+      <Checkout
+        open={checkoutOpen}
+        onClose={() => setCheckoutOpen(false)}
+        items={cart}
+        total={cartTotal}
+        currency={SHOP_CONFIG.currency}
+        onOrderComplete={handleOrderComplete}
       />
       <Toast toasts={toasts} />
     </>

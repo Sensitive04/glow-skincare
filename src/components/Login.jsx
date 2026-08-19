@@ -1,23 +1,17 @@
 import { useState, useEffect } from "react";
 import { Lock, Loader2, Wifi, WifiOff } from "lucide-react";
-import { signIn, signUp } from "../store";
-import { testConnection } from "../lib/supabase";
+import { signIn } from "../store";
 
 export default function Login({ onLogin }) {
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [connStatus, setConnStatus] = useState("checking");
 
   useEffect(() => {
-    testConnection().then((result) => {
-      setConnStatus(result.ok ? "ok" : "failed");
-      if (!result.ok) {
-        setError(`Connection failed: ${result.status || result.error || "unknown"}`);
-      }
-    });
+    fetch("/api/products")
+      .then((r) => setConnStatus(r.ok ? "ok" : "failed"))
+      .catch(() => setConnStatus("failed"));
   }, []);
 
   const handleSubmit = async (e) => {
@@ -25,14 +19,7 @@ export default function Login({ onLogin }) {
     setLoading(true);
     setError("");
     try {
-      if (isSignUp) {
-        await signUp(email, password);
-        setError("Check your email for a confirmation link, then sign in.");
-        setIsSignUp(false);
-        setLoading(false);
-        return;
-      }
-      await signIn(email, password);
+      await signIn("", password);
       onLogin();
     } catch (err) {
       setError(err.message || "Authentication failed");
@@ -50,51 +37,29 @@ export default function Login({ onLogin }) {
 
         <div className={`conn-badge ${connStatus}`}>
           {connStatus === "checking" && <><Loader2 size={14} className="spin" /> Connecting...</>}
-          {connStatus === "ok" && <><Wifi size={14} /> Connected to Supabase</>}
+          {connStatus === "ok" && <><Wifi size={14} /> Connected to MongoDB</>}
           {connStatus === "failed" && <><WifiOff size={14} /> Connection failed</>}
         </div>
 
-        <p>
-          {isSignUp
-            ? "Create an admin account"
-            : "Sign in with your Supabase credentials"}
-        </p>
+        <p>Enter the admin password</p>
         <form onSubmit={handleSubmit}>
           <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => { setEmail(e.target.value); setError(""); }}
-            required
-            autoFocus
-          />
-          <input
             type="password"
-            placeholder="Password (min 6 characters)"
+            placeholder="Admin password"
             value={password}
             onChange={(e) => { setPassword(e.target.value); setError(""); }}
-            minLength={6}
             required
+            autoFocus
           />
           {error && <span className="login-error">{error}</span>}
           <button type="submit" disabled={loading || connStatus !== "ok"}>
             {loading ? (
               <Loader2 size={18} className="spin" />
-            ) : isSignUp ? (
-              "Create Account"
             ) : (
               "Sign In"
             )}
           </button>
         </form>
-        <button
-          className="back-link"
-          onClick={() => { setIsSignUp(!isSignUp); setError(""); }}
-        >
-          {isSignUp
-            ? "Already have an account? Sign in"
-            : "No account? Create one"}
-        </button>
         <a href="#home" className="back-link" style={{ marginTop: "0.5rem", display: "block" }}>
           Back to shop
         </a>

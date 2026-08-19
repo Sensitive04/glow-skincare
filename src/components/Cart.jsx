@@ -8,6 +8,7 @@ export default function Cart({
   currency,
   onRemove,
   onUpdateQuantity,
+  onCheckout,
 }) {
   return (
     <>
@@ -79,7 +80,7 @@ export default function Cart({
               <span>Subtotal</span>
               <span>{currency}{total.toFixed(2)}</span>
             </div>
-            <button className="checkout-btn">Proceed to Checkout</button>
+            <button className="checkout-btn" onClick={onCheckout}>Proceed to Checkout</button>
           </div>
         )}
       </div>

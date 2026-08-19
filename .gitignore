@@ -2,3 +2,7 @@ node_modules
 dist
 .env
 .env.local
+
+.vercel
+server_err.log
+server_out.log
