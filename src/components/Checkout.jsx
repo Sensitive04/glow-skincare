@@ -16,6 +16,10 @@ export default function Checkout({ open, onClose, items, total, currency, onOrde
       setError("Please fill in all fields");
       return;
     }
+    if (!/^\+?[\d\s\-]{7,15}$/.test(phone.trim())) {
+      setError("Please enter a valid phone number");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -53,8 +57,11 @@ export default function Checkout({ open, onClose, items, total, currency, onOrde
             <CheckCircle2 />
             <h2>Order Placed!</h2>
             <p>Your order <strong>#{orderId}</strong> has been received.</p>
-            <span>We'll contact you on Telegram to confirm your order.</span>
-            <button className="checkout-btn" onClick={handleClose}>Done</button>
+            <span>You can track your order status anytime using your order ID.</span>
+            <div className="checkout-success-actions">
+              <a href="#track" className="checkout-btn" onClick={handleClose}>Track My Order</a>
+              <button className="checkout-btn" onClick={handleClose}>Done</button>
+            </div>
           </div>
         ) : (
           <>
@@ -81,7 +88,15 @@ export default function Checkout({ open, onClose, items, total, currency, onOrde
               </label>
               <label>
                 Phone Number
-                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Your phone number" required />
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="e.g. +92 300 1234567"
+                  pattern="^\+?[\d\s\-]{7,15}$"
+                  title="Please enter a valid phone number (7-15 digits, may include +, spaces, hyphens)"
+                  required
+                />
               </label>
               <label>
                 Delivery Address

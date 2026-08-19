@@ -15,6 +15,9 @@ export default function Navbar({ shopName, cartCount, onCartClick }) {
             <a href="#about">About</a>
           </li>
           <li>
+            <a href="#track">Track Order</a>
+          </li>
+          <li>
             <a href="#contact">Contact</a>
           </li>
         </ul>

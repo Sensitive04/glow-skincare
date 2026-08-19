@@ -27,11 +27,16 @@ async function connectDB() {
   await orders.createIndex({ orderId: 1 });
 }
 
+// --- Helpers ---
+function escHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
 // --- Telegram helpers ---
 async function sendTelegram(text) {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
   try {
-    await fetch(
+    const res = await fetch(
       `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
       {
         method: "POST",
@@ -43,6 +48,10 @@ async function sendTelegram(text) {
         }),
       }
     );
+    if (!res.ok) {
+      const body = await res.text();
+      console.error("Telegram API error:", res.status, body);
+    }
   } catch (e) {
     console.error("Telegram send error:", e.message);
   }
@@ -52,15 +61,15 @@ function formatOrderMessage(order) {
   const items = order.items
     .map(
       (item, i) =>
-        `${i + 1}. ${item.name} (x${item.quantity}) — ${order.currency}${(item.price * item.quantity).toFixed(2)}`
+        `${i + 1}. ${escHtml(item.name)} (x${item.quantity}) — ${order.currency}${(item.price * item.quantity).toFixed(2)}`
     )
     .join("\n");
 
   return (
     `📦 <b>New Order #${order.orderId}</b>\n\n` +
-    `👤 <b>${order.customer.name}</b>\n` +
-    `📞 ${order.customer.phone}\n` +
-    `📍 ${order.customer.address}\n\n` +
+    `👤 <b>${escHtml(order.customer.name)}</b>\n` +
+    `📞 ${escHtml(order.customer.phone)}\n` +
+    `📍 ${escHtml(order.customer.address)}\n\n` +
     `<b>Items:</b>\n${items}\n\n` +
     `💰 <b>Total: ${order.currency}${order.total.toFixed(2)}</b>\n\n` +
     `Reply with:\n` +
@@ -76,6 +85,10 @@ async function pollTelegramReplies() {
   try {
     const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates?offset=${tgOffset}&timeout=30`;
     const res = await fetch(url);
+    if (!res.ok) {
+      console.error("Telegram poll HTTP error:", res.status);
+      return;
+    }
     const data = await res.json();
     if (!data.ok || !data.result) return;
 
@@ -84,16 +97,17 @@ async function pollTelegramReplies() {
       const msg = update.message;
       if (!msg || String(msg.chat.id) !== String(TELEGRAM_CHAT_ID)) continue;
 
-      const text = (msg.text || "").trim().toLowerCase();
-      const confirmMatch = text.match(/^confirm\s+(\d+)$/);
-      const rejectMatch = text.match(/^reject\s+(\d+)$/);
+      const text = (msg.text || "").trim();
+      const textLower = text.toLowerCase();
+      const confirmMatch = textLower.match(/^confirm\s+(GS\d+)$/i);
+      const rejectMatch = textLower.match(/^reject\s+(GS\d+)$/i);
+      const orderId = (confirmMatch || rejectMatch)?.[1]?.toUpperCase();
 
-      if (confirmMatch) {
-        await updateOrderStatus(confirmMatch[1], "confirmed");
-        await sendTelegram(`✅ Order #${confirmMatch[1]} confirmed & marked for shipping!`);
-      } else if (rejectMatch) {
-        await updateOrderStatus(rejectMatch[1], "rejected");
-        await sendTelegram(`❌ Order #${rejectMatch[1]} rejected.`);
+      if (orderId) {
+        const status = confirmMatch ? "confirmed" : "rejected";
+        await updateOrderStatus(orderId, status);
+        const emoji = confirmMatch ? "✅" : "❌";
+        await sendTelegram(`${emoji} Order #${orderId} ${status}${confirmMatch ? " & marked for shipping!" : "."}`);
       }
     }
   } catch (e) {
@@ -184,6 +198,10 @@ app.post("/api/orders", async (req, res) => {
 
     if (!items?.length || !customer?.name || !customer?.phone || !customer?.address) {
       return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    if (!/^\+?[\d\s\-]{7,15}$/.test(customer.phone.trim())) {
+      return res.status(400).json({ error: "Invalid phone number" });
     }
 
     const lastOrder = await orders.findOne({}, { sort: { _id: -1 } });

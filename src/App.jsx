@@ -11,6 +11,7 @@ import Footer from "./components/Footer";
 import Toast from "./components/Toast";
 import Login from "./components/Login";
 import Admin from "./components/Admin";
+import OrderTracking from "./components/OrderTracking";
 
 function useHashRoute() {
   const [route, setRoute] = useState(window.location.hash || "#home");
@@ -98,6 +99,31 @@ export default function App() {
       return <Login onLogin={() => setLoggedIn(true)} />;
     }
     return <Admin onLogout={() => { setLoggedIn(false); window.location.hash = "#home"; }} />;
+  }
+
+  if (route === "#track") {
+    return (
+      <>
+        <Navbar
+          shopName={SHOP_CONFIG.name}
+          cartCount={cartCount}
+          onCartClick={() => setCartOpen(true)}
+        />
+        <OrderTracking />
+        <Footer config={SHOP_CONFIG} />
+        <Cart
+          open={cartOpen}
+          onClose={() => setCartOpen(false)}
+          items={cart}
+          total={cartTotal}
+          currency={SHOP_CONFIG.currency}
+          onRemove={removeFromCart}
+          onUpdateQuantity={updateQuantity}
+          onCheckout={() => { setCartOpen(false); setCheckoutOpen(true); }}
+        />
+        <Toast toasts={toasts} />
+      </>
+    );
   }
 
   return (
