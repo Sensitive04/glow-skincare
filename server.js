@@ -73,7 +73,8 @@ function formatOrderMessage(order) {
     `<b>Items:</b>\n${items}\n\n` +
     `💰 <b>Total: ${order.currency}${order.total.toFixed(2)}</b>\n\n` +
     `Reply with:\n` +
-    `<code>confirm ${order.orderId}</code> — to confirm & ship\n` +
+    `<code>confirm ${order.orderId}</code> — to confirm\n` +
+    `<code>ship ${order.orderId}</code> — to mark as shipped\n` +
     `<code>reject ${order.orderId}</code> — to reject`
   );
 }
@@ -85,15 +86,26 @@ async function handleTelegramUpdate(text) {
   const trimmed = (text || "").trim();
   const trimmedLower = trimmed.toLowerCase();
   const confirmMatch = trimmedLower.match(/^confirm\s+(GS\d+)$/i);
+  const shipMatch = trimmedLower.match(/^ship\s+(GS\d+)$/i);
   const rejectMatch = trimmedLower.match(/^reject\s+(GS\d+)$/i);
-  const orderId = (confirmMatch || rejectMatch)?.[1]?.toUpperCase();
+  const orderId = (confirmMatch || shipMatch || rejectMatch)?.[1]?.toUpperCase();
 
   if (!orderId) return false;
 
-  const status = confirmMatch ? "confirmed" : "rejected";
+  let status, emoji, msg;
+  if (confirmMatch) {
+    status = "confirmed"; emoji = "✅";
+    msg = `✅ Order #${orderId} confirmed!`;
+  } else if (shipMatch) {
+    status = "shipped"; emoji = "🚚";
+    msg = `🚚 Order #${orderId} shipped!`;
+  } else {
+    status = "rejected"; emoji = "❌";
+    msg = `❌ Order #${orderId} rejected.`;
+  }
+
   await updateOrderStatus(orderId, status);
-  const emoji = confirmMatch ? "✅" : "❌";
-  await sendTelegram(`${emoji} Order #${orderId} ${status}${confirmMatch ? " & marked for shipping!" : "."}`);
+  await sendTelegram(msg);
   return true;
 }
 

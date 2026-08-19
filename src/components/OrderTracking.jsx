@@ -6,7 +6,7 @@ const STATUS_CONFIG = {
   pending: { icon: Clock, label: "Pending", color: "var(--color-accent)" },
   confirmed: { icon: CheckCircle2, label: "Confirmed", color: "var(--color-primary)" },
   rejected: { icon: XCircle, label: "Rejected", color: "var(--color-badge-sale)" },
-  shipping: { icon: Truck, label: "Shipping", color: "var(--color-primary)" },
+  shipped: { icon: Truck, label: "Shipped", color: "var(--color-primary)" },
 };
 
 function OrderCard({ order }) {
@@ -41,8 +41,8 @@ function OrderCard({ order }) {
       </div>
 
       <div className="track-steps">
-        {["pending", "confirmed", "shipping"].map((step, i) => {
-          const currentIdx = ["pending", "confirmed", "shipping"].indexOf(order.status);
+        {["pending", "confirmed", "shipped"].map((step, i) => {
+          const currentIdx = ["pending", "confirmed", "shipped"].indexOf(order.status);
           const isRejected = order.status === "rejected";
           const done = !isRejected && i <= currentIdx;
           const current = !isRejected && i === currentIdx;
